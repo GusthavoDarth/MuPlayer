@@ -4,6 +4,9 @@
 *.out
 *.dll
 *.a
+*.flac
+*.mp3
+*.wav
 
 # Ignorar pastas de IDE e Sistema Operacional
 .vscode/
