@@ -1,0 +1,10 @@
+# Ignorar arquivos compilados e executáveis
+*.exe
+*.o
+*.out
+*.dll
+*.a
+
+# Ignorar pastas de IDE e Sistema Operacional
+.vscode/
+.DS_Store
