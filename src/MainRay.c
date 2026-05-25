@@ -14,12 +14,20 @@ int main(void) {
     const int MIN_LEFT_SIZE = 256;
     const int CONTROL_PANEL_HEIGHT = 100;
     const int TOP_BAR_HEIGHT = 25;
+    const int ITEM_HEIGHT = 22;
 
     struct MusicMetadata lib[MAX_MUSIC_COUNT];
+
     int count = 0;
+    int scrollOffset = 0;
+    int currentSample = 0;
+    float progress = 0.0f;
+
+
     nav_folder("Test_music_files", 0, lib, &count);
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    //SetConfigFlags(FLAG_WINDOW_UNDECORATED);
     InitWindow(MIN_WIDTH, MIN_HEIGHT, "MuPlayer - Responsive UI");
     SetTargetFPS(60);
 
@@ -29,6 +37,7 @@ int main(void) {
 
         int screen_w = GetScreenWidth();
         int screen_h = GetScreenHeight();
+        Vector2 mousePos = GetMousePosition();
 
         // base panels layouts
         int leftWidth = (screen_w + screen_h) / 8;
@@ -54,7 +63,7 @@ int main(void) {
 
         int btnHeight = 50;
         int btnWidth = 50;
-        int controlPanelXCenter = controlPanel.x + (controlPanel.width / 2);
+        int controlPanelXCenter = albumPanel.x + (albumPanel.width / 2);
         int controlPanelYCenter = controlPanel.y + (controlPanel.height / 2);
 
         Rectangle playButton = {
@@ -76,9 +85,50 @@ int main(void) {
             btnHeight
         };
 
+        Rectangle progressBar = {
+            controlPanel.x + albumPanel.width + (rigthWidth*0.125) + (2*PADDING),
+            controlPanel.y - 5 + (controlPanel.height / 2),
+            (rigthWidth*0.75) - (2*PADDING),
+            10
+        };
+        Rectangle progressBarFill = {
+            controlPanel.x + albumPanel.width + (rigthWidth*0.125) + (2*PADDING),
+            controlPanel.y - 5 + (controlPanel.height / 2),
+            ((rigthWidth*0.75) - (2*PADDING)) * progress,
+            10
+        };
 
 
+        if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + 20)
+        {
+            if (CheckCollisionPointRec(mousePos, bibliotecaPanel)) {
+                scrollOffset -= (int)(GetMouseWheelMove() * ITEM_HEIGHT * 3);
 
+                int maxScroll = (count * ITEM_HEIGHT) - ((int)bibliotecaPanel.height + 20);
+                if (scrollOffset < 0) scrollOffset = 0;
+                if (scrollOffset > maxScroll && maxScroll > 0) scrollOffset = maxScroll;
+            }
+        }
+
+
+        //progress = (mouseX - barX) / barWidth
+        //currentSample = (int)(progress * totalSamples)
+
+        //progress += 0.0005f;
+        //if (progress > 1.0f) progress = 0.0f;
+
+        if (progress < 0.0f) progress = 0.0f;
+        if (progress > 1.0f) progress = 1.0f;
+
+        if (CheckCollisionPointRec(mousePos, progressBar))
+        {
+            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+            {
+
+                progress = (mousePos.x - progressBar.x) / progressBar.width;
+                currentSample = (int)(progress * lib[0].total_samples);
+            }
+        }
 
         BeginDrawing();
 
@@ -94,8 +144,6 @@ int main(void) {
             DrawRectangleLinesEx(infoPanel, 2, DARKGRAY);
             //DrawText("Infos", infoPanel.x + 10, infoPanel.y + 10, 20, GRAY);
             // text
-            DrawText(lib[0].title, infoPanel.x + 10, infoPanel.y + 20, 20, GRAY);
-            DrawText(lib[0].artist, infoPanel.x + 10, infoPanel.y + 40, 20, GRAY);
 
             // control panel
             DrawRectangleLinesEx(controlPanel, 2, DARKGRAY);
@@ -103,7 +151,6 @@ int main(void) {
 
             // draw buttons
             {
-                Vector2 mousePos = GetMousePosition();
                 Color PlaybuttonColor = DARKGRAY;
                 Color ForwardButtonColor = DARKGRAY;
                 Color BackwardButtonColor = DARKGRAY;
@@ -167,6 +214,11 @@ int main(void) {
                 DrawRectangleRec(backwardButton, BackwardButtonColor);
             }
 
+            // draw progress bar
+            //DrawRectangle(controlPanelXCenter - 5, controlPanelYCenter - 5, 1000, 10, RED);
+            DrawRectangleRec(progressBar, GRAY);
+            DrawRectangleRec(progressBarFill, RED);
+
 
             // fila panel
             DrawRectangleLinesEx(filaPanel, 2, DARKGRAY);
@@ -174,13 +226,22 @@ int main(void) {
 
             // biblioteca panel
             DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
+
+            BeginScissorMode(bibliotecaPanel.x, bibliotecaPanel.y, bibliotecaPanel.width, bibliotecaPanel.height);
             for(int i = 0; i < count; i++)
             {
-                DrawText(lib[i].title, bibliotecaPanel.x + 10, bibliotecaPanel.y + 10 + i * 20, 20, GRAY);
+                int yPos = bibliotecaPanel.y + 10 + (i * ITEM_HEIGHT) - scrollOffset;
+                DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, GRAY);
             }
-            //DrawText("Biblioteca", bibliotecaPanel.x + 10, bibliotecaPanel.y + 10, 20, GRAY);
-            //printf("%s\n", lib[count - 1].filepath);
+            EndScissorMode();
 
+            if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + 20)
+            {
+                float ratio = bibliotecaPanel.height / (float)(count * ITEM_HEIGHT);
+                float barH = bibliotecaPanel.height * ratio;
+                float barY = bibliotecaPanel.y + (scrollOffset / (float)(count * ITEM_HEIGHT)) * bibliotecaPanel.height;
+                DrawRectangle(bibliotecaPanel.x + bibliotecaPanel.width - 6, barY, 4, barH, DARKGRAY);
+            }
 
 
         EndDrawing();

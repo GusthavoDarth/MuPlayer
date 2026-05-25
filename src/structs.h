@@ -7,6 +7,8 @@ struct MusicMetadata {
     char title[256];
     char artist[256];
     char filepath[1024];
+    uint16_t bits_per_sample;
+    uint32_t total_samples;
     uint32_t sample_rate;
     uint32_t num_channels;
     long file_offset;

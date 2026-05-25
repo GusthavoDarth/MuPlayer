@@ -24,6 +24,8 @@ struct MusicMetadata wavParser(const char *filename)
             fread(&fmt, sizeof(fmt), 1, file);
             metadata.sample_rate = fmt.sample_rate;
             metadata.num_channels = fmt.num_channels;
+            metadata.bits_per_sample = fmt.bits_per_sample;
+            metadata.file_offset = ftell(file);
             fseek(file, chunk.size - sizeof(fmt) + chunk.size % 2, SEEK_CUR);
         }
         else if (chunk.id == 0x5453494c) // "LIST"
@@ -66,6 +68,7 @@ struct MusicMetadata wavParser(const char *filename)
         else if (chunk.id == 0x64617461) // "data"
         {
             metadata.file_offset = ftell(file);
+            metadata.total_samples = chunk.size / (metadata.num_channels * (metadata.bits_per_sample / 8));
             fseek(file, chunk.size + (chunk.size % 2), SEEK_CUR);
         }
         else
