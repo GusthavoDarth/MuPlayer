@@ -1,7 +1,10 @@
+#include "playback.h"
 #include "raylib.h"
 #include "wavParser.h"
 #include "navfolder.h"
 #include <stdio.h>
+#include "structs.h"
+#include "playback.h"
 
 
 int main(void) {
@@ -17,23 +20,30 @@ int main(void) {
     const int ITEM_HEIGHT = 22;
 
     struct MusicMetadata lib[MAX_MUSIC_COUNT];
+    struct Playback playback;
 
     int count = 0;
     int scrollOffset = 0;
     int currentSample = 0;
     float progress = 0.0f;
 
+    int currentMusic = 0;
+
+    float volume = 0.5f;
 
     nav_folder("Test_music_files", 0, lib, &count);
+    playback_init(&playback);
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     //SetConfigFlags(FLAG_WINDOW_UNDECORATED);
     InitWindow(MIN_WIDTH, MIN_HEIGHT, "MuPlayer - Responsive UI");
     SetTargetFPS(60);
-
     SetWindowMinSize(MIN_WIDTH, MIN_HEIGHT);
 
-    while (!WindowShouldClose()) {
+    InitAudioDevice();
+
+    while (!WindowShouldClose())
+    {
 
         int screen_w = GetScreenWidth();
         int screen_h = GetScreenHeight();
@@ -85,6 +95,7 @@ int main(void) {
             btnHeight
         };
 
+        // progress bar
         Rectangle progressBar = {
             controlPanel.x + albumPanel.width + (rigthWidth*0.125) + (2*PADDING),
             controlPanel.y - 5 + (controlPanel.height / 2),
@@ -98,6 +109,7 @@ int main(void) {
             10
         };
 
+        // musics itens
 
         if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + 20)
         {
@@ -114,8 +126,11 @@ int main(void) {
         //progress = (mouseX - barX) / barWidth
         //currentSample = (int)(progress * totalSamples)
 
-        //progress += 0.0005f;
+        //progress += 0.001f;
         //if (progress > 1.0f) progress = 0.0f;
+
+        playback_update(&playback);
+
 
         if (progress < 0.0f) progress = 0.0f;
         if (progress > 1.0f) progress = 1.0f;
@@ -142,7 +157,8 @@ int main(void) {
 
             // info panel
             DrawRectangleLinesEx(infoPanel, 2, DARKGRAY);
-            //DrawText("Infos", infoPanel.x + 10, infoPanel.y + 10, 20, GRAY);
+            DrawText(lib[currentMusic].title, infoPanel.x + 10, infoPanel.y + 10, 20, GRAY);
+            DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 30, 20, GRAY);
             // text
 
             // control panel
@@ -225,13 +241,37 @@ int main(void) {
             DrawText("Fila", filaPanel.x + 10, filaPanel.y + 10, 20, GRAY);
 
             // biblioteca panel
-            DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
+            //DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
 
             BeginScissorMode(bibliotecaPanel.x, bibliotecaPanel.y, bibliotecaPanel.width, bibliotecaPanel.height);
             for(int i = 0; i < count; i++)
             {
                 int yPos = bibliotecaPanel.y + 10 + (i * ITEM_HEIGHT) - scrollOffset;
+                Rectangle itens = {
+                    bibliotecaPanel.x + 10,
+                    yPos,
+                    bibliotecaPanel.width - 20,
+                    ITEM_HEIGHT
+                };
+                DrawRectangleLinesEx(itens, 1, GRAY);
                 DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, GRAY);
+
+                if (CheckCollisionPointRec(mousePos, itens))
+                {
+                    DrawRectangleRec(itens, DARKGRAY);
+                    DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, LIGHTGRAY);
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                    {
+                        DrawRectangleLinesEx(itens, 1, DARKGRAY);
+                        currentMusic = i;  // <-- the index becomes the selected track ID
+                    }
+                }
+                if(i == currentMusic)
+                {
+                    DrawRectangleRec(itens, DARKGRAY);
+                    DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, LIGHTGRAY);
+                }
+
             }
             EndScissorMode();
 
@@ -246,6 +286,8 @@ int main(void) {
 
         EndDrawing();
     }
+
+    CloseAudioDevice();
 
     CloseWindow();
     return 0;

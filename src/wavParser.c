@@ -25,7 +25,7 @@ struct MusicMetadata wavParser(const char *filename)
             metadata.sample_rate = fmt.sample_rate;
             metadata.num_channels = fmt.num_channels;
             metadata.bits_per_sample = fmt.bits_per_sample;
-            metadata.file_offset = ftell(file);
+            //metadata.file_offset = ftell(file);
             fseek(file, chunk.size - sizeof(fmt) + chunk.size % 2, SEEK_CUR);
         }
         else if (chunk.id == 0x5453494c) // "LIST"
