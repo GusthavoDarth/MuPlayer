@@ -9,6 +9,10 @@
 *.wav
 Musics/
 
+!Test_music_files/**/*.wav
+!Test_music_files/**/*.mp3
+!Test_music_files/**/*.flac
+
 # Ignorar pastas de IDE e Sistema Operacional
 .vscode/
 .DS_Store
