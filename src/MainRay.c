@@ -10,25 +10,26 @@
 int main(void) {
     const int MIN_WIDTH = 1024;
     const int MIN_HEIGHT = 600;
-
-
-    const int PADDING = 20;
+    const int PADDING = 10;
     const int MAX_LEFT_SIZE = 320;
     const int MIN_LEFT_SIZE = 256;
     const int CONTROL_PANEL_HEIGHT = 100;
     const int TOP_BAR_HEIGHT = 25;
     const int ITEM_HEIGHT = 22;
+    const int SCROLL_WIDTH = 10;
+    const float ROUNDINESS = 0.05;
 
     struct MusicMetadata lib[MAX_MUSIC_COUNT];
     struct Playback playback;
 
     int count = 0;
     int scrollOffset = 0;
+    int dragStartScrollOffset = scrollOffset;
+    int dragStartMouseY = 0;
     int currentSample = 0;
     float progress = 0.0f;
-
     int currentMusic = 0;
-
+    bool isDraggingScrollbar = false;
     float volume = 0.5f;
 
     nav_folder("Test_music_files", 0, lib, &count);
@@ -47,7 +48,9 @@ int main(void) {
 
         int screen_w = GetScreenWidth();
         int screen_h = GetScreenHeight();
+
         Vector2 mousePos = GetMousePosition();
+
 
         // base panels layouts
         int leftWidth = (screen_w + screen_h) / 8;
@@ -76,19 +79,21 @@ int main(void) {
         int controlPanelXCenter = albumPanel.x + (albumPanel.width / 2);
         int controlPanelYCenter = controlPanel.y + (controlPanel.height / 2);
 
-        Rectangle playButton = {
+        Vector2 circleCenter = { controlPanelXCenter, controlPanelYCenter };
+
+        Rectangle PlayButton = {
             controlPanelXCenter - (btnWidth / 2),
             controlPanelYCenter - (btnHeight / 2),
             btnWidth,
             btnHeight
         };
-        Rectangle forwardButton = {
+        Rectangle ForwardButton = {
             controlPanelXCenter - (btnWidth / 2) + PADDING + btnWidth,
             controlPanelYCenter - (btnHeight / 2),
             btnWidth,
             btnHeight
         };
-        Rectangle backwardButton = {
+        Rectangle BackwardButton = {
             controlPanelXCenter - (btnWidth / 2) - PADDING - btnWidth,
             controlPanelYCenter - (btnHeight / 2),
             btnWidth,
@@ -96,54 +101,65 @@ int main(void) {
         };
 
         // progress bar
-        Rectangle progressBar = {
+        Rectangle ProgressBar = {
             controlPanel.x + albumPanel.width + (rigthWidth*0.125) + (2*PADDING),
             controlPanel.y - 5 + (controlPanel.height / 2),
             (rigthWidth*0.75) - (2*PADDING),
             10
         };
-        Rectangle progressBarFill = {
+        Rectangle ProgressBarFill = {
             controlPanel.x + albumPanel.width + (rigthWidth*0.125) + (2*PADDING),
             controlPanel.y - 5 + (controlPanel.height / 2),
             ((rigthWidth*0.75) - (2*PADDING)) * progress,
             10
         };
 
+        // scrollbar
+        Rectangle scrollbar = {
+            bibliotecaPanel.x + bibliotecaPanel.width - 10,
+            bibliotecaPanel.y + (scrollOffset / (float)(count * ITEM_HEIGHT)) * bibliotecaPanel.height,
+            SCROLL_WIDTH,
+            (bibliotecaPanel.height) * (bibliotecaPanel.height + ITEM_HEIGHT) / (float)(count * ITEM_HEIGHT)
+        };
+
         // musics itens
 
-        if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + 20)
+        if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + ITEM_HEIGHT)
         {
+            int maxScroll = (count * ITEM_HEIGHT) - ((int)bibliotecaPanel.height + ITEM_HEIGHT);
             if (CheckCollisionPointRec(mousePos, bibliotecaPanel)) {
-                scrollOffset -= (int)(GetMouseWheelMove() * ITEM_HEIGHT * 3);
-
-                int maxScroll = (count * ITEM_HEIGHT) - ((int)bibliotecaPanel.height + 20);
+                scrollOffset -= (int)(GetMouseWheelMove() * ITEM_HEIGHT);
                 if (scrollOffset < 0) scrollOffset = 0;
                 if (scrollOffset > maxScroll && maxScroll > 0) scrollOffset = maxScroll;
             }
         }
+        else scrollOffset = 0;
 
+        // progress bar colision
+        if (CheckCollisionPointRec(mousePos, scrollbar) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        {
+            isDraggingScrollbar = true;
+            dragStartScrollOffset = scrollOffset;
+            dragStartMouseY = mousePos.y;
+        }
+        else if (isDraggingScrollbar && IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        {
+            int mouseDelta = mousePos.y - dragStartMouseY;
+            int maxScroll = (count * ITEM_HEIGHT) - ((int)bibliotecaPanel.height + ITEM_HEIGHT);
+            float ratio = maxScroll / bibliotecaPanel.height;
 
-        //progress = (mouseX - barX) / barWidth
-        //currentSample = (int)(progress * totalSamples)
+            scrollOffset = dragStartScrollOffset + (int)(mouseDelta * ratio * 2);
 
-        //progress += 0.001f;
-        //if (progress > 1.0f) progress = 0.0f;
+            if (scrollOffset < 0) scrollOffset = 0;
+            if (scrollOffset > maxScroll && maxScroll > 0) scrollOffset = maxScroll;
+        }
+        else if (isDraggingScrollbar && IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { isDraggingScrollbar = false; }
+
 
         playback_update(&playback);
 
-
         if (progress < 0.0f) progress = 0.0f;
         if (progress > 1.0f) progress = 1.0f;
-
-        if (CheckCollisionPointRec(mousePos, progressBar))
-        {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-            {
-
-                progress = (mousePos.x - progressBar.x) / progressBar.width;
-                currentSample = (int)(progress * lib[0].total_samples);
-            }
-        }
 
         BeginDrawing();
 
@@ -157,9 +173,13 @@ int main(void) {
 
             // info panel
             DrawRectangleLinesEx(infoPanel, 2, DARKGRAY);
+
+            BeginScissorMode(infoPanel.x, infoPanel.y, infoPanel.width, infoPanel.height);
+
             DrawText(lib[currentMusic].title, infoPanel.x + 10, infoPanel.y + 10, 20, GRAY);
             DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 30, 20, GRAY);
-            // text
+
+            EndScissorMode();
 
             // control panel
             DrawRectangleLinesEx(controlPanel, 2, DARKGRAY);
@@ -171,69 +191,43 @@ int main(void) {
                 Color ForwardButtonColor = DARKGRAY;
                 Color BackwardButtonColor = DARKGRAY;
 
-                if (CheckCollisionPointRec(mousePos, playButton))
+                // play/pause button
+                if (CheckCollisionPointRec(mousePos, PlayButton))
                 {
                     PlaybuttonColor = GRAY;
-
-                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    {
-                        PlaybuttonColor = GREEN;
-                    }
-                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    {
-                        PlaybuttonColor = RED;
-                    }
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { PlaybuttonColor = RED; }
                 }
-                else
-                {
-                    PlaybuttonColor = DARKGRAY;
-                }
+                else { PlaybuttonColor = DARKGRAY; }
 
-                if (CheckCollisionPointRec(mousePos, forwardButton))
+                // forward button
+                if (CheckCollisionPointRec(mousePos, ForwardButton))
                 {
                     ForwardButtonColor = GRAY;
-
-                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    {
-                        ForwardButtonColor = GREEN;
-                    }
-                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    {
-                        ForwardButtonColor = RED;
-                    }
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { ForwardButtonColor = RED; }
                 }
-                else
-                {
-                    ForwardButtonColor = DARKGRAY;
-                }
+                else { ForwardButtonColor = DARKGRAY; }
 
-                if (CheckCollisionPointRec(mousePos, backwardButton))
+                // backward button
+                if (CheckCollisionPointRec(mousePos, BackwardButton))
                 {
                     BackwardButtonColor = GRAY;
-
-                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    {
-                        BackwardButtonColor = GREEN;
-                    }
-                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    {
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
                         BackwardButtonColor = RED;
+                        nav_folder("Musics", 0, lib, &count);
                     }
                 }
-                else
-                {
-                    BackwardButtonColor = DARKGRAY;
-                }
+                else { BackwardButtonColor = DARKGRAY; }
 
-                DrawRectangleRec(playButton, PlaybuttonColor);
-                DrawRectangleRec(forwardButton, ForwardButtonColor);
-                DrawRectangleRec(backwardButton, BackwardButtonColor);
+                DrawCircleV(circleCenter, (float)btnWidth / 2, PlaybuttonColor);
+                //DrawRectangleRec(PlayButton, PlaybuttonColor);
+                DrawRectangleRec(ForwardButton, ForwardButtonColor);
+                DrawRectangleRec(BackwardButton, BackwardButtonColor);
             }
 
             // draw progress bar
             //DrawRectangle(controlPanelXCenter - 5, controlPanelYCenter - 5, 1000, 10, RED);
-            DrawRectangleRec(progressBar, GRAY);
-            DrawRectangleRec(progressBarFill, RED);
+            DrawRectangleRounded(ProgressBar, 1, 10, GRAY);
+            DrawRectangleRounded(ProgressBarFill, 1, 10, RED);
 
 
             // fila panel
@@ -241,29 +235,28 @@ int main(void) {
             DrawText("Fila", filaPanel.x + 10, filaPanel.y + 10, 20, GRAY);
 
             // biblioteca panel
-            //DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
-
             BeginScissorMode(bibliotecaPanel.x, bibliotecaPanel.y, bibliotecaPanel.width, bibliotecaPanel.height);
+
             for(int i = 0; i < count; i++)
             {
-                int yPos = bibliotecaPanel.y + 10 + (i * ITEM_HEIGHT) - scrollOffset;
+                int yPos = bibliotecaPanel.y + (i * ITEM_HEIGHT) - scrollOffset;
                 Rectangle itens = {
-                    bibliotecaPanel.x + 10,
+                    bibliotecaPanel.x,
                     yPos,
-                    bibliotecaPanel.width - 20,
+                    bibliotecaPanel.width - SCROLL_WIDTH,
                     ITEM_HEIGHT
                 };
-                DrawRectangleLinesEx(itens, 1, GRAY);
-                DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, GRAY);
+
+                DrawText(lib[i].title, bibliotecaPanel.x + 5, yPos, 20, GRAY);
 
                 if (CheckCollisionPointRec(mousePos, itens))
                 {
                     DrawRectangleRec(itens, DARKGRAY);
-                    DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, LIGHTGRAY);
+                    DrawText(lib[i].title, bibliotecaPanel.x + 15, yPos, 20, LIGHTGRAY);
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
                     {
                         DrawRectangleLinesEx(itens, 1, DARKGRAY);
-                        currentMusic = i;  // <-- the index becomes the selected track ID
+                        currentMusic = i;
                     }
                 }
                 if(i == currentMusic)
@@ -271,24 +264,18 @@ int main(void) {
                     DrawRectangleRec(itens, DARKGRAY);
                     DrawText(lib[i].title, bibliotecaPanel.x + 10, yPos, 20, LIGHTGRAY);
                 }
-
             }
             EndScissorMode();
 
-            if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + 20)
-            {
-                float ratio = bibliotecaPanel.height / (float)(count * ITEM_HEIGHT);
-                float barH = bibliotecaPanel.height * ratio;
-                float barY = bibliotecaPanel.y + (scrollOffset / (float)(count * ITEM_HEIGHT)) * bibliotecaPanel.height;
-                DrawRectangle(bibliotecaPanel.x + bibliotecaPanel.width - 6, barY, 4, barH, DARKGRAY);
-            }
 
+            if(count * ITEM_HEIGHT > (int)bibliotecaPanel.height + ITEM_HEIGHT){
+                DrawRectangleRec(scrollbar, DARKGRAY);
+            }
+            DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
 
         EndDrawing();
     }
-
     CloseAudioDevice();
-
     CloseWindow();
     return 0;
 }

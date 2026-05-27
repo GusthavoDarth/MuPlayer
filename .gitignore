@@ -7,7 +7,7 @@
 *.flac
 *.mp3
 *.wav
-Test_music_files/
+Musics/
 
 # Ignorar pastas de IDE e Sistema Operacional
 .vscode/
