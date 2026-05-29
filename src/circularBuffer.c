@@ -1,6 +1,6 @@
 
 #include "stdint.h"
-#include "cicularBuffer.h"
+#include "circularBuffer.h"
 
 
 bool Buffer_write(struct CircularBuffer* cb, uint8_t data) {

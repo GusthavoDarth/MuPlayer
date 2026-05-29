@@ -14,6 +14,8 @@
 void nav_folder(const char *foldername, int ident, struct MusicMetadata *lib, int *count)
 {
 
+    //printf("Navigating folder: %s\n", foldername);
+
     DIR *dir = opendir(foldername);
 
     if (dir == NULL){
