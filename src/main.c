@@ -186,10 +186,21 @@ int main(void) {
             DrawRectangleLinesEx(topPanel, 2, LIGHTGRAY);
 
             // draw buttons
-            //DrawRectangleLinesEx(exitBtn, 2, DARKGRAY);
-            //int posx = exitBtn.x - (((float)MeasureText("Exit", 20) - exitBtn.width)/2);
-            //int posy = PADDING - ((TEXT_SIZE - topPanel.height)/2);
-            //DrawText("Exit", posx, posy, TEXT_SIZE, GRAY);
+            Color exitbtncolor = RED;
+
+            if (CheckCollisionPointRec(mousePos, exitBtn))
+            {
+                exitbtncolor = ORANGE;
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    nav_folder("Musics", 0, lib, &count);
+                }
+            }
+            else { exitbtncolor = RED; }
+            int posx = exitBtn.x - (((float)MeasureText("Exit", 20) - exitBtn.width)/2);
+            int posy = PADDING - ((TEXT_SIZE - topPanel.height)/2);
+            DrawRectangleRec(exitBtn, exitbtncolor);
+            DrawText("Exit", posx, posy, TEXT_SIZE, WHITE);
+            DrawRectangleLinesEx(BackwardButton, 2, BLACK);
 
 
 
@@ -239,7 +250,7 @@ int main(void) {
                     BackwardButtonColor = GRAY;
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                         BackwardButtonColor = RED;
-                        nav_folder("Musics", 0, lib, &count);
+                        //nav_folder("Musics", 0, lib, &count);
                     }
                 }
                 else { BackwardButtonColor = DARKGRAY; }
