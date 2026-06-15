@@ -19,6 +19,17 @@ int main(void) {
     const int   btnHeight           = 40;
     const int   btnWidth            = 40;
 
+
+    Color ACCENT      = (Color){74, 222, 128, 255};
+    Color ACCENT_DIM  = (Color){22, 101, 52,  255};
+    Color ACCENT_SOFT = (Color){111, 179, 135,255};
+    Color BG          = (Color){26, 26, 26, 255};
+    Color BG_PANEL    = (Color){36, 36, 36, 255};
+    Color BG_HOVER    = (Color){48, 48, 48, 255};
+    Color BORDER      = (Color){60, 60, 60, 255};
+    Color TEXT_PRI    = (Color){240, 240, 240, 255};
+    Color TEXT_SEC    = (Color){136, 136, 136, 255};
+
     /* Volume slider geometry (posição relativa ao controlPanel — calculada no loop) */
     //const int   SLIDER_W = 80;
     //const int   SLIDER_H = 8;
@@ -35,7 +46,7 @@ int main(void) {
     bool  isDraggingScrollbar = false;
     bool  isDraggingSlider    = false;
 
-    nav_folder("Test_music_files", 0, lib, &count);
+    //nav_folder("Test_music_files", 0, lib, &count);
     nav_folder("Musics", 0, lib, &count);
 
     playback_init(&playback);
@@ -192,12 +203,11 @@ int main(void) {
         }
 
         /* ----- botão Play/Pause ----- */
-        Color PlaybuttonColor    = DARKGRAY;
-        Color ForwardButtonColor = DARKGRAY;
-        Color BackwardButtonColor = DARKGRAY;
-
+        Color PlaybuttonColor    = BG_PANEL;
+        Color ForwardButtonColor = BG_PANEL;
+        Color BackwardButtonColor = BG_PANEL;
         if (CheckCollisionPointRec(mousePos, PlayButton)) {
-            PlaybuttonColor = GRAY;
+            PlaybuttonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 if (playback.is_playing) {
                     playback_pause(&playback);
@@ -211,7 +221,7 @@ int main(void) {
 
         /* ----- botão Forward (próxima) ----- */
         if (CheckCollisionPointRec(mousePos, ForwardButton)) {
-            ForwardButtonColor = GRAY;
+            ForwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 if (count > 0) {
                     currentMusic = (currentMusic + 1) % count;
@@ -222,7 +232,7 @@ int main(void) {
 
         /* ----- botão Backward (anterior) ----- */
         if (CheckCollisionPointRec(mousePos, BackwardButton)) {
-            BackwardButtonColor = GRAY;
+            BackwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 if (count > 0) {
                     currentMusic = (currentMusic - 1 + count) % count;
@@ -247,25 +257,25 @@ int main(void) {
 
         /* ====== DRAW ====== */
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(BG);
 
         /* top panel */
-        DrawRectangleLinesEx(topPanel, 2, LIGHTGRAY);
-        //DrawText("MuPlayer", PADDING + 5, PADDING + 2, TEXT_SIZE - 4, DARKGRAY);
+        DrawRectangleLinesEx(topPanel, 2, BORDER);
+        //DrawText("MuPlayer", PADDING + 5, PADDING + 2, TEXT_SIZE - 4, TEXT_PRI);
 
         /* album panel */
-        DrawRectangleLinesEx(albumPanel, 2, DARKGRAY);
-        DrawText("Album", albumPanel.x + 10, albumPanel.y + 10, TEXT_SIZE, GRAY);
+        DrawRectangleLinesEx(albumPanel, 2, BORDER);
+        DrawText("Album", albumPanel.x + 10, albumPanel.y + 10, TEXT_SIZE, TEXT_PRI);
 
         /* info panel */
-        DrawRectangleLinesEx(infoPanel, 2, DARKGRAY);
+        DrawRectangleLinesEx(infoPanel, 2, BORDER);
         BeginScissorMode(infoPanel.x, infoPanel.y, infoPanel.width, infoPanel.height);
-        DrawText(lib[currentMusic].title,  infoPanel.x + 10, infoPanel.y + 10, TEXT_SIZE, DARKGRAY);
-        DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 35, TEXT_SIZE - 4, GRAY);
+        DrawText(lib[currentMusic].title,  infoPanel.x + 10, infoPanel.y + 10, TEXT_SIZE, ACCENT_SOFT);
+        DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 35, TEXT_SIZE - 4, TEXT_SEC);
         EndScissorMode();
 
         /* control panel */
-        DrawRectangleLinesEx(controlPanel, 2, DARKGRAY);
+        DrawRectangleLinesEx(controlPanel, 2, BORDER);
 
         /* play/pause ícone */
         DrawCircleV(circleCenter, (float)btnWidth / 2, PlaybuttonColor);
@@ -285,23 +295,23 @@ int main(void) {
 
         /* forward / backward */
         DrawRectangleRec(ForwardButton, ForwardButtonColor);
-        DrawText(">>", (int)ForwardButton.x + 6, (int)ForwardButton.y + 10, TEXT_SIZE - 4, WHITE);
+        DrawText(">>", (int)ForwardButton.x + 6, (int)ForwardButton.y + 10, TEXT_SIZE - 4, TEXT_PRI);
         DrawRectangleRec(BackwardButton, BackwardButtonColor);
-        DrawText("<<", (int)BackwardButton.x + 4, (int)BackwardButton.y + 10, TEXT_SIZE - 4, WHITE);
+        DrawText("<<", (int)BackwardButton.x + 4, (int)BackwardButton.y + 10, TEXT_SIZE - 4, TEXT_PRI);
 
         /* progress bar */
-        DrawRectangleRounded(ProgressBar,     1, 10, LIGHTGRAY);
-        DrawRectangleRounded(ProgressBarFill, 1, 10, RED);
+        DrawRectangleRounded(ProgressBar,     1, 10, BG_PANEL);
+        DrawRectangleRounded(ProgressBarFill, 1, 10, ACCENT);
 
         /* volume slider */
-        //DrawText("vol", (int)VolumeTrack.x, (int)VolumeTrack.y - 14, TEXT_SIZE - 8, GRAY);
-        DrawRectangleRec(VolumeTrack, LIGHTGRAY);
-        DrawRectangleRec(VolumeFill, RED);
-        DrawRectangleRec(VolumeThumb, DARKGRAY);
+        //DrawText("vol", (int)VolumeTrack.x, (int)VolumeTrack.y - 14, TEXT_SIZE - 8, TEXT_PRI);
+        DrawRectangleRec(VolumeTrack, ACCENT_DIM);
+        DrawRectangleRec(VolumeFill, ACCENT);
+        DrawRectangleRec(VolumeThumb, ACCENT_SOFT);
 
         /* fila panel */
-        DrawRectangleLinesEx(filaPanel, 2, DARKGRAY);
-        DrawText("Fila", filaPanel.x + 10, filaPanel.y + 10, TEXT_SIZE, GRAY);
+        DrawRectangleLinesEx(filaPanel, 2, BORDER);
+        DrawText("Fila", filaPanel.x + 10, filaPanel.y + 10, TEXT_SIZE, TEXT_PRI);
 
         /* biblioteca panel */
         BeginScissorMode(bibliotecaPanel.x, bibliotecaPanel.y,
@@ -313,12 +323,12 @@ int main(void) {
             bool hovered = CheckCollisionPointRec(mousePos, item);
 
             if (i == currentMusic || hovered) {
-                DrawRectangleRec(item, i == currentMusic ? DARKGRAY : (Color){200,200,200,255});
+                DrawRectangleRec(item, i == currentMusic ? ACCENT_DIM : ACCENT_SOFT);
             }
             DrawText(lib[i].title,
                      bibliotecaPanel.x + (hovered || i == currentMusic ? 12 : 5),
                      yPos, TEXT_SIZE - 2,
-                     (i == currentMusic || hovered) ? RAYWHITE : GRAY);
+                     (i == currentMusic || hovered) ? RAYWHITE  : TEXT_PRI);
 
             if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 currentMusic = i;
@@ -328,8 +338,8 @@ int main(void) {
         EndScissorMode();
 
         if (count * ITEM_HEIGHT > (int)bibliotecaPanel.height + ITEM_HEIGHT)
-            DrawRectangleRec(scrollbar, DARKGRAY);
-        DrawRectangleLinesEx(bibliotecaPanel, 2, DARKGRAY);
+            DrawRectangleRec(scrollbar, BG_PANEL);
+        DrawRectangleLinesEx(bibliotecaPanel, 2, BORDER);
 
         EndDrawing();
     }
