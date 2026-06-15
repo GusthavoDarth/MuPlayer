@@ -30,7 +30,6 @@ int main(void) {
     int scrollOffset = 0;
     int dragStartScrollOffset = scrollOffset;
     int dragStartMouseY = 0;
-    int currentSample = 0;
     float progress = 0.0f;
     int currentMusic = 0;
     bool isDraggingScrollbar = false;
@@ -44,6 +43,8 @@ int main(void) {
     InitWindow(MIN_WIDTH, MIN_HEIGHT, "MuPlayer - Responsive UI");
     SetTargetFPS(60);
     SetWindowMinSize(MIN_WIDTH, MIN_HEIGHT);
+
+    SetAudioStreamBufferSizeDefault(STREAM_FRAMES);
 
     InitAudioDevice();
 
@@ -163,14 +164,66 @@ int main(void) {
         //pregress bar
         if (CheckCollisionPointRec(mousePos, ProgressBar))
         {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && playback.is_playing)
             {
                 progress = (mousePos.x - ProgressBar.x) / ProgressBar.width;
-                currentSample = (int)(progress * lib[currentMusic].total_samples);
+                long total_data_size = playback.current->total_samples
+                                     * playback.current->num_channels
+                                     * (playback.current->bits_per_sample / 8);
+                long seek_byte = playback.current->file_offset + (long)(progress * total_data_size);
+                int frame_size = playback.current->num_channels * (playback.current->bits_per_sample / 8);
+                seek_byte -= (seek_byte - playback.current->file_offset) % frame_size;
+                fseek(playback.file, seek_byte, SEEK_SET);
+                StopAudioStream(playback.stream);
+                PlayAudioStream(playback.stream);
             }
         }
 
+        Color exitbtncolor = RED;
 
+        if (CheckCollisionPointRec(mousePos, exitBtn))
+        {
+            exitbtncolor = ORANGE;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                nav_folder("Musics", 0, lib, &count);
+            }
+        }
+        else { exitbtncolor = RED; }
+
+        Color PlaybuttonColor = DARKGRAY;
+        Color ForwardButtonColor = DARKGRAY;
+        Color BackwardButtonColor = DARKGRAY;
+
+        // play/pause button
+        if (CheckCollisionPointRec(mousePos, PlayButton))
+        {
+            PlaybuttonColor = GRAY;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                playback_play(&playback, &lib[currentMusic]);
+            }
+        }
+        else { PlaybuttonColor = DARKGRAY; }
+
+        // forward button
+        if (CheckCollisionPointRec(mousePos, ForwardButton))
+        {
+            ForwardButtonColor = GRAY;
+            if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { ForwardButtonColor = RED; }
+        }
+        else { ForwardButtonColor = DARKGRAY; }
+
+        // backward button
+        if (CheckCollisionPointRec(mousePos, BackwardButton))
+        {
+            BackwardButtonColor = GRAY;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                BackwardButtonColor = RED;
+                //nav_folder("Musics", 0, lib, &count);
+            }
+        }
+        else { BackwardButtonColor = DARKGRAY; }
+
+        if (playback.is_playing) progress = playback_progress(&playback);
         if (progress < 0.0f) progress = 0.0f;
         if (progress > 1.0f) progress = 1.0f;
 
@@ -186,16 +239,6 @@ int main(void) {
             DrawRectangleLinesEx(topPanel, 2, LIGHTGRAY);
 
             // draw buttons
-            Color exitbtncolor = RED;
-
-            if (CheckCollisionPointRec(mousePos, exitBtn))
-            {
-                exitbtncolor = ORANGE;
-                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    nav_folder("Musics", 0, lib, &count);
-                }
-            }
-            else { exitbtncolor = RED; }
             int posx = exitBtn.x - (((float)MeasureText("Exit", 20) - exitBtn.width)/2);
             int posy = PADDING - ((TEXT_SIZE - topPanel.height)/2);
             DrawRectangleRec(exitBtn, exitbtncolor);
@@ -223,43 +266,12 @@ int main(void) {
             DrawText("Controles", controlPanel.x + 10, controlPanel.y + 10, TEXT_SIZE, GRAY);
 
             // draw buttons
-            {
-                Color PlaybuttonColor = DARKGRAY;
-                Color ForwardButtonColor = DARKGRAY;
-                Color BackwardButtonColor = DARKGRAY;
 
-                // play/pause button
-                if (CheckCollisionPointRec(mousePos, PlayButton))
-                {
-                    PlaybuttonColor = GRAY;
-                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { PlaybuttonColor = RED; }
-                }
-                else { PlaybuttonColor = DARKGRAY; }
+            DrawCircleV(circleCenter, (float)btnWidth / 2, PlaybuttonColor);
+            //DrawRectangleRec(PlayButton, PlaybuttonColor);
+            DrawRectangleRec(ForwardButton, ForwardButtonColor);
+            DrawRectangleRec(BackwardButton, BackwardButtonColor);
 
-                // forward button
-                if (CheckCollisionPointRec(mousePos, ForwardButton))
-                {
-                    ForwardButtonColor = GRAY;
-                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) { ForwardButtonColor = RED; }
-                }
-                else { ForwardButtonColor = DARKGRAY; }
-
-                // backward button
-                if (CheckCollisionPointRec(mousePos, BackwardButton))
-                {
-                    BackwardButtonColor = GRAY;
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                        BackwardButtonColor = RED;
-                        //nav_folder("Musics", 0, lib, &count);
-                    }
-                }
-                else { BackwardButtonColor = DARKGRAY; }
-
-                DrawCircleV(circleCenter, (float)btnWidth / 2, PlaybuttonColor);
-                //DrawRectangleRec(PlayButton, PlaybuttonColor);
-                DrawRectangleRec(ForwardButton, ForwardButtonColor);
-                DrawRectangleRec(BackwardButton, BackwardButtonColor);
-            }
 
             // draw progress bar
             //DrawRectangle(controlPanelXCenter - 5, controlPanelYCenter - 5, 1000, 10, RED);

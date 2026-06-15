@@ -10,8 +10,8 @@
 #define STREAM_FRAMES 4096
 
 struct Playback {
-    AudioStream stream;
     FILE* file;
+    AudioStream stream;
     struct MusicMetadata* current;
     bool is_playing;
     float volume;
@@ -21,6 +21,7 @@ struct Playback {
 void playback_init(struct Playback* playback);
 void playback_stop(struct Playback* playback);
 void playback_update(struct Playback* playback);
+float playback_progress(struct Playback* playback);
 
 void playback_play(struct Playback* playback, struct MusicMetadata* current);
 void playback_pause(struct Playback* playback);

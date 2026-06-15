@@ -7,7 +7,9 @@
 
 struct MusicMetadata wavParser(const char *filename)
 {
-    struct MusicMetadata metadata;
+
+    struct MusicMetadata metadata = {0};
+
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
         perror("Failed to open file");
@@ -25,7 +27,7 @@ struct MusicMetadata wavParser(const char *filename)
             metadata.sample_rate = fmt.sample_rate;
             metadata.num_channels = fmt.num_channels;
             metadata.bits_per_sample = fmt.bits_per_sample;
-            fseek(file, chunk.size - sizeof(fmt) + (chunk.size % 2), SEEK_CUR);
+            fseek(file, chunk.size - sizeof(struct fmt_chunk) + (chunk.size % 2), SEEK_CUR);
         }
         else if (chunk.id == 0x5453494c) // "LIST"
         {
@@ -62,9 +64,8 @@ struct MusicMetadata wavParser(const char *filename)
             else{
                 fseek(file, (chunk.size - 4) + chunk.size % 2, SEEK_CUR);
             }
-            if(chunk.size % 2) fseek(file, chunk.size % 2, SEEK_CUR);
         }
-        else if (chunk.id == 0x64617461) // "data"
+        else if (chunk.id == 0x61746164) // "data"
         {
             metadata.file_offset = ftell(file);
             metadata.total_samples = chunk.size / (metadata.num_channels * (metadata.bits_per_sample / 8));

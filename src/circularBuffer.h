@@ -2,6 +2,7 @@
 #define CIRCULAR_BUFFER_H
 
 #include "stdint.h"
+#include <stdbool.h>
 
 #define BUFFER_CAPACITY 8196
 
