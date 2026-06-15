@@ -1,79 +1,135 @@
 #include "playback.h"
 #include "raylib.h"
 #include "structs.h"
+#include <string.h>
+
+/* ---------- init ---------- */
 
 void playback_init(struct Playback *playback)
 {
-    playback->file = NULL;
-    playback->current = NULL;
+    playback->file        = NULL;
+    playback->current     = NULL;
+    playback->is_playing  = false;
+    playback->is_paused   = false;
+    playback->volume      = 1.0f;
+    playback->paused_byte = 0;
+}
+
+/* ---------- play (sempre começa do início da faixa) ---------- */
+
+void playback_play(struct Playback *playback, struct MusicMetadata *current)
+{
+    playback_stop(playback);
+
+    playback->file = fopen(current->filepath, "rb");
+    if (playback->file == NULL) return;
+
+    fseek(playback->file, current->file_offset, SEEK_SET);
+
+    playback->current    = current;
+    playback->is_playing = true;
+    playback->is_paused  = false;
+    playback->stream     = LoadAudioStream(current->sample_rate,
+                                           current->bits_per_sample,
+                                           current->num_channels);
+    SetAudioStreamVolume(playback->stream, playback->volume);
+    PlayAudioStream(playback->stream);
+}
+
+/* ---------- pause ---------- */
+
+void playback_pause(struct Playback *playback)
+{
+    if (!playback->is_playing) return;
+
+    playback->paused_byte = ftell(playback->file);
+    PauseAudioStream(playback->stream);
     playback->is_playing = false;
-    playback->volume = 1.0f;
+    playback->is_paused  = true;
 }
 
-void playback_play(struct Playback* playback, struct MusicMetadata* current)
+/* ---------- resume (retoma de onde pausou) ---------- */
+
+void playback_resume(struct Playback *playback)
 {
-   playback_stop(playback);
-   if((playback->file = fopen(current->filepath, "rb")) == NULL) { return; }
+    if (!playback->is_paused) return;
 
-   fseek(playback->file, current->file_offset, SEEK_SET);
-   printf("file_offset: %ld, total_samples: %u, channels: %u, bps: %u\n",
-          current->file_offset, current->total_samples,
-          current->num_channels, current->bits_per_sample);
-   playback->current = current;
-   playback->is_playing = true;
-   playback->stream = LoadAudioStream(current->sample_rate, current->bits_per_sample, current->num_channels);
-
-   PlayAudioStream(playback->stream);
+    fseek(playback->file, playback->paused_byte, SEEK_SET);
+    ResumeAudioStream(playback->stream);
+    playback->is_playing = true;
+    playback->is_paused  = false;
 }
 
-void playback_pause(struct Playback* playback) {
-    if (playback->is_playing) {
-        PauseAudioStream(playback->stream);
-        playback->is_playing = false;
-    }
-}
+/* ---------- stop (libera tudo) ---------- */
 
-void playback_stop(struct Playback* playback)
+void playback_stop(struct Playback *playback)
 {
-    if (playback->is_playing) {
+    if (playback->is_playing || playback->is_paused) {
         StopAudioStream(playback->stream);
-        playback->is_playing = false;
         UnloadAudioStream(playback->stream);
         fclose(playback->file);
-        playback->file = NULL;
+        playback->file       = NULL;
+        playback->is_playing = false;
+        playback->is_paused  = false;
+        playback->paused_byte = 0;
     }
 }
 
-
+/* ---------- update (chamado todo frame) ---------- */
 
 void playback_update(struct Playback *playback)
 {
-    if (playback->is_playing) {
-        // Raylib handles the state natively; no need for a custom flag
-        if (IsAudioStreamProcessed(playback->stream)) {
-            int samples_to_read = playback->current->num_channels * STREAM_FRAMES;
-            int samples = fread(playback->buffer, sizeof(int16_t), samples_to_read, playback->file);
-            int frames = samples / playback->current->num_channels;
+    if (!playback->is_playing) return;
 
-            if (samples == 0) {
-                playback_stop(playback);
-                return;
-            }
+    if (IsAudioStreamProcessed(playback->stream)) {
+        int samples_to_read = playback->current->num_channels * STREAM_FRAMES;
+        int samples = fread(playback->buffer, sizeof(int16_t),
+                            samples_to_read, playback->file);
 
-            if (frames > STREAM_FRAMES) frames = STREAM_FRAMES;
-            UpdateAudioStream(playback->stream, playback->buffer, frames);
+        if (samples == 0) {
+            playback_stop(playback);
+            return;
         }
+
+        /* Aplicar volume por multiplicação de sample (0.0–1.0) */
+        if (playback->volume < 0.999f) {
+            for (int i = 0; i < samples; i++) {
+                playback->buffer[i] = (int16_t)(playback->buffer[i] * playback->volume);
+            }
+        }
+
+        int frames = samples / playback->current->num_channels;
+        if (frames > STREAM_FRAMES) frames = STREAM_FRAMES;
+        UpdateAudioStream(playback->stream, playback->buffer, frames);
     }
 }
 
-float playback_progress(struct Playback* playback) {
-    if (!playback->is_playing || playback->current == NULL) return 0.0f;
+/* ---------- progress (0.0 a 1.0) ---------- */
 
-    long current_byte = ftell(playback->file);
+float playback_progress(struct Playback *playback)
+{
+    if (!playback->is_playing && !playback->is_paused) return 0.0f;
+    if (playback->current == NULL) return 0.0f;
+
+    long current_byte = playback->is_paused
+                        ? playback->paused_byte
+                        : ftell(playback->file);
     long start = playback->current->file_offset;
-    long total = playback->current->total_samples
+    long total = (long)playback->current->total_samples
                * playback->current->num_channels
                * (playback->current->bits_per_sample / 8);
 
+    if (total <= 0) return 0.0f;
     return (float)(current_byte - start) / (float)total;
+}
+
+/* ---------- volume ---------- */
+
+void playback_set_volume(struct Playback *playback, float volume)
+{
+    if (volume < 0.0f) volume = 0.0f;
+    if (volume > 1.0f) volume = 1.0f;
+    playback->volume = volume;
+    if (playback->is_playing || playback->is_paused)
+        SetAudioStreamVolume(playback->stream, volume);
 }
