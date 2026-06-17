@@ -1,4 +1,4 @@
-makefileCC     = gcc
+CC     = gcc
 CFLAGS = -Wall -Wextra -I src/include -I src
 SRCS   = src/main.c src/wavParser.c src/navfolder.c src/playback.c src/flac.c
 OUT    = MuPlayer

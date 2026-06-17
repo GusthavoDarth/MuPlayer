@@ -91,16 +91,6 @@ void playback_update(struct Playback *playback)
             return;
         }
 
-        /* Aplicar volume por multiplicação de sample (0.0–1.0) */
-        if (playback->volume < 0.999f) {
-            for (int i = 0; i < samples; i++) {
-                float sample_f = (float)playback->buffer[i] * playback->volume;
-                if (sample_f > 32767.0f) sample_f = 32767.0f;
-                if (sample_f < -32768.0f) sample_f = -32768.0f;
-                playback->buffer[i] = (int16_t)sample_f;
-            }
-        }
-
         int frames = samples / playback->current->num_channels;
         if (frames > STREAM_FRAMES) frames = STREAM_FRAMES;
         UpdateAudioStream(playback->stream, playback->buffer, frames);

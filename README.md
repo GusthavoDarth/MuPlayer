@@ -7,7 +7,6 @@ A music player built from scratch in C, using [Raylib](https://www.raylib.com/) 
 ## Screenshots
 
 ![MuPlayer em execução](screenshot.png)
-*(Adicione um print da tela do player aqui! Dica: use a função `TakeScreenshot("screenshot.png")` no `main.c` para gerar uma imagem perfeita)*
 
 ## Features
 
