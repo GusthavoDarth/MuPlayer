@@ -47,7 +47,7 @@ int main(void) {
     bool  isDraggingSlider    = false;
 
     nav_folder("Test_music_files", 0, lib, &count);
-    //nav_folder("Musics", 0, lib, &count);
+    nav_folder("Musics", 0, lib, &count);
 
     playback_init(&playback);
 
@@ -202,7 +202,7 @@ int main(void) {
             isDraggingSlider = false;
         }
 
-        /* ----- botão Play/Pause ----- */
+        /*  botão Play/Pause  */
         Color PlaybuttonColor    = BG_PANEL;
         Color ForwardButtonColor = BG_PANEL;
         Color BackwardButtonColor = BG_PANEL;
@@ -219,7 +219,7 @@ int main(void) {
             }
         }
 
-        /* ----- botão Forward (próxima) ----- */
+        /*  botão Forward (próxima)  */
         if (CheckCollisionPointRec(mousePos, ForwardButton)) {
             ForwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
@@ -228,7 +228,7 @@ int main(void) {
             }
         }
 
-        /* ----- botão Backward (anterior) ----- */
+        /*  botão Backward (anterior)  */
         if (CheckCollisionPointRec(mousePos, BackwardButton)) {
             BackwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
@@ -242,6 +242,10 @@ int main(void) {
             currentMusic = (currentMusic + 1) % count;
             playback_play(&playback, &lib[currentMusic]);
             progress = 0.0f;
+        }
+
+        if (IsKeyPressed(KEY_F12)) {
+            TakeScreenshot("screenshot.png");
         }
 
         /* atualiza progresso */

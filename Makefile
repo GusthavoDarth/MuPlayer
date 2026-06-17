@@ -1,37 +1,23 @@
-CC       = gcc
-CFLAGS   = -Wall -Wextra -O2 -I./src/include
-LDFLAGS  = -lm
-SRC      = $(wildcard src/*.c)
-OBJ      = $(SRC:.c=.o)
-TARGET   = MuPlayer
+makefileCC     = gcc
+CFLAGS = -Wall -Wextra -I src/include -I src
+SRCS   = src/main.c src/wavParser.c src/navfolder.c src/playback.c src/flac.c
+OUT    = MuPlayer
 
-# Detecção automática do sistema operacional
-UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
-
-ifeq ($(UNAME_S),Windows)
-    # Windows (MinGW)
-    LDFLAGS += -lraylib -lopengl32 -lgdi32 -lwinmm
-    TARGET   = MuPlayer.exe
-else ifeq ($(UNAME_S),Darwin)
-    # macOS
-    LDFLAGS += -lraylib -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+ifeq ($(OS),Windows_NT)
+    LIBS = -L src/lib -lraylib -lgdi32 -lwinmm
+    RM   = del /Q $(OUT).exe 2>NUL
 else
-    # Linux (e outros Unix)
-    LDFLAGS += -lraylib -lGL -lpthread -ldl -lX11
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        LIBS = -L src/lib -lraylib -framework IOKit -framework Cocoa -framework OpenGL
+    else
+        LIBS = -L src/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+    endif
+    RM = rm -f $(OUT)
 endif
 
-all: $(TARGET)
-
-$(TARGET): $(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+default:
+	$(CC) -o $(OUT) $(SRCS) $(CFLAGS) $(LIBS)
 
 clean:
-	rm -f $(OBJ) $(TARGET)
-
-run: $(TARGET)
-	./$(TARGET)
-
-.PHONY: all clean run
+	$(RM)
