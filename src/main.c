@@ -47,7 +47,7 @@ int main(void) {
     bool  isDraggingSlider    = false;
 
     nav_folder("Test_music_files", 0, lib, &count);
-    nav_folder("Musics", 0, lib, &count);
+    //nav_folder("Musics", 0, lib, &count);
 
     playback_init(&playback);
 
