@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #define STREAM_FRAMES 4096
+#define STREAM_BUFFER_SIZE (STREAM_FRAMES * 4)
 
 struct Playback {
     FILE*                file;
@@ -17,7 +18,7 @@ struct Playback {
     bool                 is_paused;    // pausado (stream alocado, arquivo aberto, posição salva)
     float                volume;       // 0.0 – 1.0
     long                 paused_byte;  // posição no arquivo quando pausou
-    int16_t              buffer[STREAM_FRAMES * 2];
+    int16_t buffer[STREAM_BUFFER_SIZE];
 };
 
 void  playback_init(struct Playback* playback);

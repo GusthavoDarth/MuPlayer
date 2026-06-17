@@ -2,6 +2,13 @@
 
 A music player built from scratch in C, using [Raylib](https://www.raylib.com/) for the graphical interface and audio streaming. The goal is to implement all low-level logic manually — from binary file parsing to the audio streaming pipeline — without relying on high-level media libraries.
 
+> **⚠️ Atenção:** Atualmente, apenas arquivos **WAV** são suportados. FLAC e MP3 estão em desenvolvimento.
+
+## Screenshots
+
+![MuPlayer em execução](screenshot.png)
+*(Adicione um print da tela do player aqui! Dica: use a função `TakeScreenshot("screenshot.png")` no `main.c` para gerar uma imagem perfeita)*
+
 ## Features
 
 - **Custom WAV binary parser** — reads RIFF/WAVE chunk structure directly, extracting `fmt` (sample rate, bit depth, channels), `LIST/INFO` metadata (title, artist) and the `data` chunk offset for streaming
@@ -10,19 +17,19 @@ A music player built from scratch in C, using [Raylib](https://www.raylib.com/) 
 - **Transport controls** — play/pause toggle, next/previous track, seek by clicking the progress bar
 - **Auto-advance** — automatically plays the next track when the current one ends
 - **Recursive directory traversal** — scans subdirectories using POSIX `dirent` to build the music library
-- **Responsive UI** — layout adapts to window resizing; library list with scrollbar, queue panel, info panel and transport controls
+- **Responsive UI** — layout adapts to window resizing; library list with scrollbar, queue panel *(UI placeholder, funcionalidade em breve)*, info panel and transport controls
 
 ## Architecture
 
 ```
 src/
-├── main.c              # Entry point — UI loop, input handling, layout (Raylib)
-├── wavParser.c/h       # RIFF/WAVE binary parser
-├── playback.c/h        # Audio streaming engine (play, pause, resume, stop, volume)
-├── navfolder.c/h       # Recursive directory scanner (POSIX dirent)
-├── circularBuffer.c/h  # Ring buffer — reserved for future audio pipeline
-├── flac.c/h            # FLAC structures and helpers (in progress)
-└── structs.h           # Shared types (MusicMetadata, chunk, fmt_chunk)
+├── main.c             # Entry point — UI loop, input handling, layout (Raylib)
+├── wavParser.c/h      # RIFF/WAVE binary parser
+├── playback.c/h       # Audio streaming engine (play, pause, resume, stop, volume)
+├── navfolder.c/h      # Recursive directory scanner (POSIX dirent)
+├── circularBuffer.c/h # Ring buffer — reservado para pipeline de áudio futuro
+├── flac.c/h           # FLAC structures and helpers (in progress)
+└── structs.h          # Shared types (MusicMetadata, chunk, fmt_chunk)
 ```
 
 ## Building
@@ -34,7 +41,7 @@ git clone https://github.com/GusthavoDarth/MuPlayer
 cd MuPlayer
 make
 ./MuPlayer        # Linux/macOS
-MuPlayer.exe      # Windows
+MuPlayer.exe      # Windows (com MinGW)
 ```
 
 Place `.wav` files in `Test_music_files/` (subfolders are scanned recursively).

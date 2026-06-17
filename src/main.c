@@ -46,8 +46,8 @@ int main(void) {
     bool  isDraggingScrollbar = false;
     bool  isDraggingSlider    = false;
 
-    //nav_folder("Test_music_files", 0, lib, &count);
-    nav_folder("Musics", 0, lib, &count);
+    nav_folder("Test_music_files", 0, lib, &count);
+    //nav_folder("Musics", 0, lib, &count);
 
     playback_init(&playback);
 
@@ -70,7 +70,7 @@ int main(void) {
         if (leftWidth > MAX_LEFT_SIZE) leftWidth = MAX_LEFT_SIZE;
 
         int rightHeight = screen_h - (CONTROL_PANEL_HEIGHT + TOP_BAR_HEIGHT + (PADDING * 3));
-        int rigthWidth  = screen_w - (leftWidth + (PADDING * 2));
+        int rightWidth  = screen_w - (leftWidth + (PADDING * 2));
 
         Rectangle topPanel      = { PADDING, PADDING, screen_w - (2*PADDING), TOP_BAR_HEIGHT - PADDING };
         Rectangle albumPanel    = { PADDING, TOP_BAR_HEIGHT + PADDING, leftWidth, leftWidth };
@@ -79,10 +79,10 @@ int main(void) {
                                     screen_h - (albumPanel.height + CONTROL_PANEL_HEIGHT + TOP_BAR_HEIGHT + (PADDING * 4)) };
         Rectangle controlPanel  = { PADDING, infoPanel.y + infoPanel.height + PADDING,
                                     screen_w - (2*PADDING), CONTROL_PANEL_HEIGHT };
-        Rectangle filaPanel     = { screen_w - rigthWidth, TOP_BAR_HEIGHT + PADDING,
-                                    ((float)rigthWidth/2) - PADDING, rightHeight };
+        Rectangle filaPanel     = { screen_w - rightWidth, TOP_BAR_HEIGHT + PADDING,
+                                    ((float)rightWidth/2) - PADDING, rightHeight };
         Rectangle bibliotecaPanel = { filaPanel.x + filaPanel.width + PADDING, TOP_BAR_HEIGHT + PADDING,
-                                      ((float)rigthWidth/2) - PADDING, rightHeight };
+                                      ((float)rightWidth/2) - PADDING, rightHeight };
 
         int controlPanelXCenter = albumPanel.x + (albumPanel.width / 2);
         int controlPanelYCenter = controlPanel.y + (controlPanel.height / 2);
@@ -108,9 +108,9 @@ int main(void) {
 
         /* --- progress bar --- */
         Rectangle ProgressBar = {
-            controlPanel.x + albumPanel.width + (rigthWidth*0.125f) + (2*PADDING),
+            controlPanel.x + albumPanel.width + (rightWidth*0.125f) + (2*PADDING),
             controlPanel.y - 5 + (controlPanel.height / 2),
-            (rigthWidth*0.75f) - (2*PADDING), 10
+            (rightWidth*0.75f) - (2*PADDING), 10
         };
         Rectangle ProgressBarFill = { ProgressBar.x, ProgressBar.y,
                                       ProgressBar.width * progress, 10 };
@@ -222,27 +222,23 @@ int main(void) {
         /* ----- botão Forward (próxima) ----- */
         if (CheckCollisionPointRec(mousePos, ForwardButton)) {
             ForwardButtonColor = BG_HOVER;
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (count > 0) {
-                    currentMusic = (currentMusic + 1) % count;
-                    playback_play(&playback, &lib[currentMusic]);
-                }
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
+                currentMusic = (currentMusic + 1) % count;
+                playback_play(&playback, &lib[currentMusic]);
             }
         }
 
         /* ----- botão Backward (anterior) ----- */
         if (CheckCollisionPointRec(mousePos, BackwardButton)) {
             BackwardButtonColor = BG_HOVER;
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (count > 0) {
-                    currentMusic = (currentMusic - 1 + count) % count;
-                    playback_play(&playback, &lib[currentMusic]);
-                }
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
+                currentMusic = (currentMusic - 1 + count) % count;
+                playback_play(&playback, &lib[currentMusic]);
             }
         }
 
         /* auto-avanço quando música termina */
-        if (!playback.is_playing && !playback.is_paused && progress >= 0.99f) {
+        if (!playback.is_playing && !playback.is_paused && progress >= 0.99f && count > 0) {
             currentMusic = (currentMusic + 1) % count;
             playback_play(&playback, &lib[currentMusic]);
             progress = 0.0f;
@@ -270,8 +266,13 @@ int main(void) {
         /* info panel */
         DrawRectangleLinesEx(infoPanel, 2, BORDER);
         BeginScissorMode(infoPanel.x, infoPanel.y, infoPanel.width, infoPanel.height);
-        DrawText(lib[currentMusic].title,  infoPanel.x + 10, infoPanel.y + 10, TEXT_SIZE, ACCENT_SOFT);
-        DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 35, TEXT_SIZE - 4, TEXT_SEC);
+        if (count > 0) {
+            DrawText(lib[currentMusic].title,  infoPanel.x + 10, infoPanel.y + 10, TEXT_SIZE, ACCENT_SOFT);
+            DrawText(lib[currentMusic].artist, infoPanel.x + 10, infoPanel.y + 35, TEXT_SIZE - 4, TEXT_SEC);
+        } else {
+            DrawText("No music files found", infoPanel.x + 10, infoPanel.y + 10, TEXT_SIZE, TEXT_SEC);
+            DrawText("Place .wav files in Test_music_files/", infoPanel.x + 10, infoPanel.y + 35, TEXT_SIZE - 4, TEXT_SEC);
+        }
         EndScissorMode();
 
         /* control panel */
@@ -330,7 +331,7 @@ int main(void) {
                      yPos, TEXT_SIZE - 2,
                      (i == currentMusic || hovered) ? RAYWHITE  : TEXT_PRI);
 
-            if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
                 currentMusic = i;
                 playback_play(&playback, &lib[currentMusic]);
             }

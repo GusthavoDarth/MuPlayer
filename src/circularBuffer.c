@@ -3,7 +3,7 @@
 #include "circularBuffer.h"
 
 
-bool Buffer_write(struct CircularBuffer* cb, uint8_t data) {
+bool buffer_write(struct CircularBuffer* cb, uint8_t data) {
     if (cb->count == BUFFER_CAPACITY) {
         return false;
     }
@@ -13,7 +13,7 @@ bool Buffer_write(struct CircularBuffer* cb, uint8_t data) {
     return true;
 }
 
-bool Buffer_read(struct CircularBuffer* cb, uint8_t *data_out){
+bool buffer_read(struct CircularBuffer* cb, uint8_t *data_out){
     if (cb->count == 0){
         return false;
     }

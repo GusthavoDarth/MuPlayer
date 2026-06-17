@@ -2,7 +2,6 @@
 #include <dirent.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "structs.h"
 
 struct MusicMetadata wavParser(const char *filename)

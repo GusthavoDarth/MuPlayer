@@ -1,12 +1,37 @@
-CC     = gcc
-CFLAGS = -Wall -Wextra -I src/include -I src
-LIBS   = -L src/lib -lraylib -lgdi32 -lwinmm
+CC       = gcc
+CFLAGS   = -Wall -Wextra -O2 -I./src/include
+LDFLAGS  = -lm
+SRC      = $(wildcard src/*.c)
+OBJ      = $(SRC:.c=.o)
+TARGET   = MuPlayer
 
-SRCS = src/main.c src/wavParser.c src/navfolder.c src/playback.c src/flac.c
-OUT  = MuPlayer
+# Detecção automática do sistema operacional
+UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
 
-default:
-	$(CC) -o $(OUT) $(SRCS) $(CFLAGS) $(LIBS)
+ifeq ($(UNAME_S),Windows)
+    # Windows (MinGW)
+    LDFLAGS += -lraylib -lopengl32 -lgdi32 -lwinmm
+    TARGET   = MuPlayer.exe
+else ifeq ($(UNAME_S),Darwin)
+    # macOS
+    LDFLAGS += -lraylib -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+else
+    # Linux (e outros Unix)
+    LDFLAGS += -lraylib -lGL -lpthread -ldl -lX11
+endif
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	del $(OUT).exe 2>NUL || rm -f $(OUT)
+	rm -f $(OBJ) $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
+
+.PHONY: all clean run

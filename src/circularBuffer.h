@@ -14,8 +14,8 @@ struct CircularBuffer {
 };
 
 
-bool Buffer_write(struct CircularBuffer* cb, uint8_t data);
+bool buffer_write(struct CircularBuffer* cb, uint8_t data);
 
-bool Buffer_read(struct CircularBuffer* cb, uint8_t *data_out);
+bool buffer_read(struct CircularBuffer* cb, uint8_t *data_out);
 
 #endif
