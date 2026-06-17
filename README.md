@@ -12,7 +12,7 @@ A music player built from scratch in C, using [Raylib](https://www.raylib.com/) 
 
 - **Custom WAV binary parser** — reads RIFF/WAVE chunk structure directly, extracting `fmt` (sample rate, bit depth, channels), `LIST/INFO` metadata (title, artist) and the `data` chunk offset for streaming
 - **Streaming playback** — audio is read from disk in 4096-frame blocks via `AudioStream`, avoiding loading the entire file into memory
-- **Volume control** — sample-level float multiplication; slider in the control panel
+- **Volume control** — stream gain via Raylib's AudioStream API; slider in the control panel
 - **Transport controls** — play/pause toggle, next/previous track, seek by clicking the progress bar
 - **Auto-advance** — automatically plays the next track when the current one ends
 - **Recursive directory traversal** — scans subdirectories using POSIX `dirent` to build the music library
