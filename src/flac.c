@@ -22,7 +22,7 @@ void read_flac(char *filepath)
     FILE *file = fopen(filepath, "rb");
     if (file == NULL) {
         printf("Failed to open file: %s\n", filepath);
-        return;           /* exit(1) removido — não mata o processo inteiro */
+        return;
     }
     uint8_t magic[4];
     fread(&magic, sizeof(magic), 1, file);
