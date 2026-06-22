@@ -64,7 +64,7 @@ int main(void) {
         int     screen_h  = GetScreenHeight();
         Vector2 mousePos  = GetMousePosition();
 
-        /* --- layouts --- */
+        /* layouts */
         int leftWidth = (screen_w + screen_h) / 8;
         if (leftWidth < MIN_LEFT_SIZE) leftWidth = MIN_LEFT_SIZE;
         if (leftWidth > MAX_LEFT_SIZE) leftWidth = MAX_LEFT_SIZE;
@@ -87,7 +87,7 @@ int main(void) {
         int controlPanelXCenter = albumPanel.x + (albumPanel.width / 2);
         int controlPanelYCenter = controlPanel.y + (controlPanel.height / 2);
 
-        /* --- botões de controle --- */
+        /* botões de controle */
         Vector2 circleCenter = { controlPanelXCenter, controlPanelYCenter };
 
         Rectangle PlayButton = {
@@ -106,7 +106,7 @@ int main(void) {
             btnWidth, btnHeight
         };
 
-        /* --- progress bar --- */
+        /* progress bar */
         Rectangle ProgressBar = {
             controlPanel.x + albumPanel.width + (rightWidth*0.125f) + (2*PADDING),
             controlPanel.y - 5 + (controlPanel.height / 2),
@@ -115,7 +115,7 @@ int main(void) {
         Rectangle ProgressBarFill = { ProgressBar.x, ProgressBar.y,
                                       ProgressBar.width * progress, 10 };
 
-        /* --- slider de volume (canto direito do controlPanel) --- */
+        /* slider de volume (canto direito do controlPanel) */
         int volHeight = 70;
         Rectangle VolumeTrack = {
             controlPanel.x + controlPanel.width - (4*PADDING),
@@ -134,7 +134,7 @@ int main(void) {
             20, 10
         };
 
-        /* --- scrollbar biblioteca --- */
+        /* scrollbar biblioteca */
         Rectangle scrollbar = {
             bibliotecaPanel.x + bibliotecaPanel.width - SCROLL_WIDTH,
             bibliotecaPanel.y + (scrollOffset / (float)(count * ITEM_HEIGHT)) * bibliotecaPanel.height,
@@ -142,7 +142,7 @@ int main(void) {
             (bibliotecaPanel.height) * (bibliotecaPanel.height + ITEM_HEIGHT) / (float)(count * ITEM_HEIGHT)
         };
 
-        /* ====== INPUT ====== */
+        /* INPUT */
 
         /* scroll lista */
         if (count * ITEM_HEIGHT > (int)bibliotecaPanel.height + ITEM_HEIGHT) {
@@ -202,7 +202,7 @@ int main(void) {
             isDraggingSlider = false;
         }
 
-        /*  botão Play/Pause  */
+        /* botão Play/Pause */
         Color PlaybuttonColor    = BG_PANEL;
         Color ForwardButtonColor = BG_PANEL;
         Color BackwardButtonColor = BG_PANEL;
@@ -219,7 +219,7 @@ int main(void) {
             }
         }
 
-        /*  botão Forward (próxima)  */
+        /* botão Forward (próxima) */
         if (CheckCollisionPointRec(mousePos, ForwardButton)) {
             ForwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
@@ -228,7 +228,7 @@ int main(void) {
             }
         }
 
-        /*  botão Backward (anterior)  */
+        /* botão Backward (anterior) */
         if (CheckCollisionPointRec(mousePos, BackwardButton)) {
             BackwardButtonColor = BG_HOVER;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && count > 0) {
@@ -255,7 +255,7 @@ int main(void) {
 
         playback_update(&playback);
 
-        /* ====== DRAW ====== */
+        /* DRAW */
         BeginDrawing();
         ClearBackground(BG);
 
