@@ -3,8 +3,6 @@
 #include "structs.h"
 #include <string.h>
 
-/*  init  */
-
 void playback_init(struct Playback *playback)
 {
     playback->file        = NULL;
@@ -15,7 +13,7 @@ void playback_init(struct Playback *playback)
     playback->paused_byte = 0;
 }
 
-/*  play (sempre começa do início da faixa)  */
+/* play (sempre começa do início da faixa) */
 
 void playback_play(struct Playback *playback, struct MusicMetadata *current)
 {
@@ -36,7 +34,7 @@ void playback_play(struct Playback *playback, struct MusicMetadata *current)
     PlayAudioStream(playback->stream);
 }
 
-/*  pause  */
+/* pause */
 
 void playback_pause(struct Playback *playback)
 {
@@ -48,7 +46,7 @@ void playback_pause(struct Playback *playback)
     playback->is_paused  = true;
 }
 
-/*  resume (retoma de onde pausou)  */
+/* resume (retoma de onde pausou) */
 
 void playback_resume(struct Playback *playback)
 {
@@ -60,7 +58,7 @@ void playback_resume(struct Playback *playback)
     playback->is_paused  = false;
 }
 
-/*  stop (libera tudo)  */
+/* stop (libera tudo) */
 
 void playback_stop(struct Playback *playback)
 {
@@ -75,7 +73,7 @@ void playback_stop(struct Playback *playback)
     }
 }
 
-/*  update (chamado todo frame)  */
+/* update (chamado todo frame) */
 
 void playback_update(struct Playback *playback)
 {
@@ -97,7 +95,7 @@ void playback_update(struct Playback *playback)
     }
 }
 
-/*  progress (0.0 a 1.0)  */
+/* progress (0.0 a 1.0) */
 
 float playback_progress(struct Playback *playback)
 {
@@ -116,7 +114,7 @@ float playback_progress(struct Playback *playback)
     return (float)(current_byte - start) / (float)total;
 }
 
-/*  volume  */
+/* volume */
 
 void playback_set_volume(struct Playback *playback, float volume)
 {
